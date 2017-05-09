@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.briup.run.dao.IMessengerDao">
+	<!-- 保存短信 -->
+	<insert id="saveMessage" parameterType="com.briup.run.common.bean.Messagerecord">
+			<selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="long"> 
+			select message_sequ.nextval from dual
+			</selectKey>
+			insert into messagerecord values(#{id},#{sender},#{receiver},#{senddate},#{title},#{content},#{senderstatus},#{receiverstatus},#{status})
+	</insert>
+	<!-- 更新信息 -->
+	<update id="updateMessage" parameterType="com.briup.run.common.bean.Messagerecord">
+		update messagerecord
+		<set>
+			<if test="senderstatus != null">senderstatus = #{senderstatus},</if>
+			<if test="receiverstatus != null">receiverstatus = #{receiverstatus},</if>
+			<if test="status != null">status = #{status},</if>
+		</set>
+		where id=#{id}
+	</update>
+
+	<!-- 查找已发送邮件 -->
+	<select id="listSendMessage" resultType="com.briup.run.common.bean.Messagerecord">
+		select * from messagerecord where sender = #{sender}
+	</select>
+	<!-- 查看已收的已读邮件 -->
+	<select id="listRecieveMessageRe" resultType="com.briup.run.common.bean.Messagerecord">
+		select * from messagerecord where status=1 and receiver = #{receiver}
+	</select>
+	<!-- 查看已收未读的邮件 -->
+	<select id="listRecieveMessageR" resultType="com.briup.run.common.bean.Messagerecord">
+		select * from messagerecord where status=0 and receiver = #{receiver}
+	</select>
+	
+	<!-- 通过id查找短信 -->
+	<select id="findMessage" parameterType="long" resultType="com.briup.run.common.bean.Messagerecord">
+		select * from messagerecord where id=#{id}
+	</select>
+	<!-- 通过id删除收到短信 -->
+	<delete id="delRecieveMessage" parameterType="long" >
+		delete from messagerecord where id=#{id}
+	</delete>
+	<!-- 通过id删除发送短信 -->
+	<delete id="delSendMessage" parameterType="long" >
+		delete from messagerecord where id=#{id}
+	</delete>
+</mapper>

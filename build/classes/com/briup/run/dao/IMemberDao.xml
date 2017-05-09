@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.briup.run.dao.IMemberDao">
+	<!-- 根据名字查找成员信息 -->
+	<select id="findMemberinfoByName" resultType="com.briup.run.common.bean.Memberinfo">
+		select * from memberinfo where nickname=#{nickname}
+	</select>
+	
+	<!-- 注册新用户 -->
+	<insert id="saveMemberinfo" parameterType="com.briup.run.common.bean.Memberinfo">
+		<selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="long">
+			select memberinfo_sequ.nextval from dual
+		</selectKey>
+		insert into memberinfo(id,nickname,password,gender,age,email,provincecity,address,phone,passwordquestion,passwordanswer,recommender,point,registerdate,latestdate,status,isonline,gradeid) 
+		values(#{id},#{nickname},#{password},#{gender},#{age},#{email},#{provincecity},#{address},#{phone},#{passwordquestion},#{passwordanswer},#{recommender},#{point},#{registerdate},#{latestdate},#{status},#{isonline},#{graderecord.id})
+	</insert>
+	
+	<!-- 保存或更新用户 -->
+	<!-- 保存或更新用户 -->
+	<update id="updateMemberinfo" parameterType="com.briup.run.common.bean.Memberinfo">
+		update memberinfo
+		<set>
+			<if test="point != null">point = #{point},</if>
+			<if test="password != null">password = #{password},</if>
+			<if test="status != null">status = #{status},</if>
+			<if test="isonline != null">isonline = #{isonline},</if>
+			<if test="latestdate != null">latestdate = #{latestdate},</if>
+			<if test="gender != null"> gender = #{gender},</if>
+			<if test="age != null">age  = #{age},</if>
+			<if test="email != null">email  = #{email},</if>
+			<if test="provincecity != null">provincecity  = #{provincecity},</if>
+			<if test="address != null"> address = #{address},</if>
+			<if test="phone != null"> phone = #{phone},</if>
+			<if test="passwordquestion != null"> passwordquestion = #{passwordquestion},</if>
+			<if test="passwordanswer != null"> passwordanswer = #{passwordanswer},</if>
+			<if test="recommender != null"> recommender = #{recommender},</if>
+			<if test="registerdate != null"> registerdate = #{registerdate},</if>
+		</set>
+		where nickname=#{nickname}
+	</update>
+	<!-- 按照积分动作查找Pointaction类 -->
+	<select id="findPointactionByPointAction" resultType="com.briup.run.common.bean.Pointaction">
+		select point from pointaction where actionname = #{actionname}
+	</select>
+	<!-- 按照积分查找等级 -->
+	<select id="findMemberinfoLevel" resultType="com.briup.run.common.bean.Graderecord"> 
+		select gradename from graderecord where #{point} between minpoint and maxpoint
+	</select>
+	
+	<!-- 保存积分记录 -->
+	<insert id="savePointrecord" parameterType="com.briup.run.common.bean.Pointrecord">
+		<selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="long">
+			select pointrecord_sequ.nextval from dual
+		</selectKey>
+		insert into pointrecord values(#{id},#{memberinfo.nickname},#{receivedate},#{pointaction.id})
+	</insert>
+
+	<!-- 查找是否有个人空间 -->
+	<select id="findSpace" resultType="com.briup.run.common.bean.Memberspace" parameterType="long">
+		select * from memberspace where memberid = #{memberinfo.id}
+	</select>
+	<!-- 保存到个人空间 -->
+	
+	<insert id="saveSpace" parameterType="com.briup.run.common.bean.Memberspace">
+		<selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="long">
+			select memberspace_sequ.nextval from dual
+		</selectKey>
+		insert into memberspace (id,opinion,runtime,runplace,runstar,runhabit,cellphone,icon,memberid)
+		values(#{id},#{opinion},#{runtime},#{runplace},#{runstar},#{runhabit},#{cellphone},#{icon},#{memberinfo.id})
+	</insert>
+	<!-- 更新个人空间 -->
+	<update id="updateSpace" parameterType="com.briup.run.common.bean.Memberspace">
+	update memberspace
+	<set>
+			<if test="opinion != null">opinion = #{opinion},</if>
+			<if test="runtime != null">runtime = #{runtime},</if>
+			<if test="runplace != null">runplace = #{runplace},</if>
+			<if test="runstar != null">runstar = #{runstar},</if>
+			<if test="runhabit != null">runhabit = #{runhabit},</if>
+			<if test="cellphone != null">cellphone = #{cellphone},</if>
+			<if test="icon != null">icon = #{icon},</if>
+	</set>
+	where memberid = #{memberinfo.id} 
+	</update>
+	<!-- 查找前几名用户  -->
+	<select id="findMemberinfoByNum" parameterType="int" resultType="com.briup.run.common.bean.Memberinfo">
+		select nickname,point from memberinfo  where rownum <![CDATA[<=]]> #{num} order by point desc 
+	</select>
+	<!-- 查找在线用户数量 -->
+	<select id="findMemberinfoOnline" resultType="int">
+		select count(*) from memberinfo where isonline = 1
+	</select>
+
+	<!--随机从数据库查找一名 -->
+	<select id="findOneFriend"  parameterType="String"  resultType="com.briup.run.common.bean.Memberinfo">
+		select * from(select * from memberinfo where nickname !=#{nickname} order by dbms_random.value) where rownum =1
+	</select>
+	<!-- 从数据库查找符合条件的好友 -->
+	<select id="findFriends" parameterType="map" resultType="com.briup.run.common.bean.Memberinfo">
+		select * from memberinfo where nickname !=#{nickname} and age between #{min} and #{max}
+		<if test="gender != null">
+			and gender=#{gender} 
+		</if>
+		<if test="provincecity != null">
+		    and provincecity=#{provincecity}
+		</if>
+	</select>
+	<!-- 保存更改好友信息 -->
+	<insert id="saveFriend" parameterType="com.briup.run.common.bean.Friendrecord">
+		<selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="long">
+			select addfriend_sequ.nextval from dual
+		</selectKey>
+		insert into friendrecord values(#{id},#{selfname},#{friendname})
+	</insert>
+	<delete id="updateFriend" parameterType="com.briup.run.common.bean.Friendrecord">
+		delete from friendrecord where friendname= #{friendname}
+	</delete>
+	<!-- 保存更改黑名单信息 -->
+	<insert id="saveBlackFriend" parameterType="com.briup.run.common.bean.Blackrecord">
+		<selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="long">
+			select blackfriend_sequ.nextval from dual
+		</selectKey>
+		insert into blackrecord values(#{id},#{selfname},#{blackname})
+	</insert>
+	<delete id="updateBlackFriend" parameterType="com.briup.run.common.bean.Blackrecord">
+		delete from blackrecord where blackname= #{blackname}
+	</delete>
+	
+	<!-- 查找本人的所有好友 -->
+	<select id="listFriend" parameterType="String" resultType="com.briup.run.common.bean.Friendrecord">
+		select * from friendrecord where selfname=#{selfname}
+	</select>
+	<!-- 查找本人的黑名单 -->
+	<select id="listBlack" parameterType="String" resultType="com.briup.run.common.bean.Blackrecord">
+		select * from blackrecord where selfname=#{selfname}
+	</select>
+	
+
+</mapper>
+
+
+
+
+
+
